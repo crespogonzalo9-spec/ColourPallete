@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Paleta de Colores</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Editor de Paleta de Colores</h1>
+            <p>Sube una imagen, detecta su paleta de colores y reemplaza colores específicos</p>
+        </header>
+
+        <main>
+            <!-- Zona de carga de imagen -->
+            <section class="upload-section">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-content">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        <p>Arrastra una imagen aquí o haz clic para seleccionar</p>
+                        <span class="supported-formats">Formatos soportados: JPG, PNG</span>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/jpeg,image/png" hidden>
+                </div>
+            </section>
+
+            <!-- Área de trabajo -->
+            <section class="workspace" id="workspace" style="display: none;">
+                <div class="workspace-grid">
+                    <!-- Panel de imagen -->
+                    <div class="image-panel">
+                        <div class="panel-header">
+                            <h2>Imagen</h2>
+                            <div class="image-controls">
+                                <button id="resetBtn" class="btn btn-secondary">Restaurar Original</button>
+                                <button id="downloadBtn" class="btn btn-primary">Descargar</button>
+                            </div>
+                        </div>
+                        <div class="canvas-container">
+                            <canvas id="imageCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Panel de paleta -->
+                    <div class="palette-panel">
+                        <div class="panel-header">
+                            <h2>Paleta de Colores</h2>
+                            <div class="palette-controls">
+                                <label for="colorCount">Colores:</label>
+                                <input type="range" id="colorCount" min="4" max="32" value="12">
+                                <span id="colorCountValue">12</span>
+                            </div>
+                        </div>
+                        <div class="palette-container" id="paletteContainer">
+                            <!-- Los colores se generarán dinámicamente -->
+                        </div>
+
+                        <!-- Editor de color -->
+                        <div class="color-editor" id="colorEditor" style="display: none;">
+                            <h3>Reemplazar Color</h3>
+                            <div class="color-editor-content">
+                                <div class="color-swap">
+                                    <div class="color-box">
+                                        <label>Color Original</label>
+                                        <div class="color-preview" id="originalColorPreview"></div>
+                                        <span id="originalColorHex"></span>
+                                    </div>
+                                    <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="5" y1="12" x2="19" y2="12"/>
+                                        <polyline points="12 5 19 12 12 19"/>
+                                    </svg>
+                                    <div class="color-box">
+                                        <label>Nuevo Color</label>
+                                        <input type="color" id="newColorPicker" class="color-picker">
+                                        <span id="newColorHex">#000000</span>
+                                    </div>
+                                </div>
+                                <div class="tolerance-control">
+                                    <label for="tolerance">Tolerancia: <span id="toleranceValue">30</span></label>
+                                    <input type="range" id="tolerance" min="0" max="100" value="30">
+                                    <p class="tolerance-hint">Mayor tolerancia = más tonos similares serán reemplazados</p>
+                                </div>
+                                <div class="editor-actions">
+                                    <button id="previewBtn" class="btn btn-secondary">Vista Previa</button>
+                                    <button id="applyBtn" class="btn btn-primary">Aplicar Cambio</button>
+                                    <button id="cancelBtn" class="btn btn-ghost">Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Historial de cambios -->
+            <section class="history-section" id="historySection" style="display: none;">
+                <h3>Historial de Cambios</h3>
+                <div class="history-list" id="historyList">
+                    <!-- Los cambios se añadirán dinámicamente -->
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Editor de Paleta de Colores - Herramienta para modificar colores en assets gráficos</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
