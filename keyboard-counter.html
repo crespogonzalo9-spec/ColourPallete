@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Teclas</title>
+    <link rel="stylesheet" href="keyboard-counter.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Contador de Teclas</h1>
+            <p class="subtitle">Presiona cualquier tecla para empezar a contar</p>
+        </header>
+
+        <div class="main-counter">
+            <div class="counter-circle">
+                <span id="total-count">0</span>
+                <span class="counter-label">Teclas presionadas</span>
+            </div>
+        </div>
+
+        <div class="last-key-section">
+            <h2>Ultima tecla presionada</h2>
+            <div id="last-key" class="last-key-display">-</div>
+            <div id="last-key-code" class="key-code">Codigo: -</div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Estadisticas por tecla</h2>
+            <div class="stats-controls">
+                <button id="sort-alpha" class="sort-btn active">A-Z</button>
+                <button id="sort-count" class="sort-btn">Por cantidad</button>
+                <button id="reset-btn" class="reset-btn">Reiniciar</button>
+            </div>
+            <div id="key-stats" class="key-stats-grid">
+                <p class="empty-message">Aun no hay teclas registradas</p>
+            </div>
+        </div>
+
+        <div class="session-info">
+            <p>Sesion iniciada: <span id="session-start">-</span></p>
+            <p>Teclas por minuto: <span id="keys-per-minute">0</span></p>
+        </div>
+    </div>
+
+    <script src="keyboard-counter.js"></script>
+</body>
+</html>
