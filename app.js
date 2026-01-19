@@ -24,6 +24,14 @@ class ColorPaletteEditor {
         this.newColorPicker = document.getElementById('newColorPicker');
         this.newColorHex = document.getElementById('newColorHex');
 
+        // Controles de limpieza
+        this.smoothingSlider = document.getElementById('smoothingLevel');
+        this.smoothingValue = document.getElementById('smoothingValue');
+        this.ditherSlider = document.getElementById('ditherAmount');
+        this.ditherValue = document.getElementById('ditherValue');
+        this.previewCleanBtn = document.getElementById('previewCleanBtn');
+        this.applyCleanBtn = document.getElementById('applyCleanBtn');
+
         // Previews
         this.originalColorPreview = document.getElementById('originalColorPreview');
         this.originalColorHex = document.getElementById('originalColorHex');
@@ -39,9 +47,11 @@ class ColorPaletteEditor {
         this.originalImageData = null;
         this.currentImageData = null;
         this.previewImageData = null;
+        this.cleanPreviewImageData = null;
         this.selectedColor = null;
         this.history = [];
         this.fileName = 'imagen';
+        this.currentPalette = [];
 
         this.init();
     }
@@ -80,6 +90,16 @@ class ColorPaletteEditor {
         this.previewBtn.addEventListener('click', () => this.previewColorChange());
         this.applyBtn.addEventListener('click', () => this.applyColorChange());
         this.cancelBtn.addEventListener('click', () => this.cancelColorChange());
+
+        // Controles de limpieza
+        this.smoothingSlider.addEventListener('input', (e) => {
+            this.smoothingValue.textContent = e.target.value;
+        });
+        this.ditherSlider.addEventListener('input', (e) => {
+            this.ditherValue.textContent = e.target.value + '%';
+        });
+        this.previewCleanBtn.addEventListener('click', () => this.previewCleanup());
+        this.applyCleanBtn.addEventListener('click', () => this.applyCleanup());
     }
 
     // ==================== Manejo de archivos ====================
@@ -169,6 +189,7 @@ class ColorPaletteEditor {
         const numColors = parseInt(this.colorCountSlider.value);
         const palette = this.kMeansClustering(colors, numColors);
 
+        this.currentPalette = palette;
         this.renderPalette(palette);
     }
 
@@ -462,6 +483,214 @@ class ColorPaletteEditor {
                 data[i] = Math.round(r + (newColor.r - targetColor.r) * factor);
                 data[i + 1] = Math.round(g + (newColor.g - targetColor.g) * factor);
                 data[i + 2] = Math.round(b + (newColor.b - targetColor.b) * factor);
+            }
+        }
+    }
+
+    // ==================== Limpieza de ruido ====================
+
+    previewCleanup() {
+        if (!this.currentImageData || this.currentPalette.length === 0) return;
+
+        // Guardar estado actual para preview
+        this.cleanPreviewImageData = new ImageData(
+            new Uint8ClampedArray(this.currentImageData.data),
+            this.currentImageData.width,
+            this.currentImageData.height
+        );
+
+        // Crear copia para trabajar
+        const workingData = new ImageData(
+            new Uint8ClampedArray(this.currentImageData.data),
+            this.currentImageData.width,
+            this.currentImageData.height
+        );
+
+        const smoothingLevel = parseInt(this.smoothingSlider.value);
+        const ditherAmount = parseInt(this.ditherSlider.value) / 100;
+
+        // Aplicar suavizado si es necesario
+        if (smoothingLevel > 0) {
+            this.applyGaussianBlur(workingData, smoothingLevel);
+        }
+
+        // Posterizar la imagen
+        this.posterizeImage(workingData, this.currentPalette, ditherAmount);
+
+        // Mostrar en canvas
+        this.ctx.putImageData(workingData, 0, 0);
+    }
+
+    applyCleanup() {
+        if (!this.currentImageData || this.currentPalette.length === 0) return;
+
+        // Si no hay preview, generar los cambios
+        if (!this.cleanPreviewImageData) {
+            this.previewCleanup();
+        }
+
+        // Guardar en historial
+        this.history.push({
+            imageData: this.cleanPreviewImageData,
+            fromColor: 'Imagen con ruido',
+            toColor: 'Imagen limpia'
+        });
+
+        // Actualizar estado actual
+        this.currentImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+        this.cleanPreviewImageData = null;
+
+        // Actualizar UI
+        this.updateHistoryUI();
+        this.extractPalette();
+    }
+
+    applyGaussianBlur(imageData, radius) {
+        const { width, height, data } = imageData;
+        const tempData = new Uint8ClampedArray(data);
+
+        // Kernel gaussiano simple basado en el radio
+        const kernelSize = radius * 2 + 1;
+        const kernel = this.generateGaussianKernel(kernelSize);
+
+        // Aplicar blur horizontal
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let r = 0, g = 0, b = 0, weightSum = 0;
+
+                for (let kx = -radius; kx <= radius; kx++) {
+                    const px = Math.min(Math.max(x + kx, 0), width - 1);
+                    const idx = (y * width + px) * 4;
+                    const weight = kernel[kx + radius];
+
+                    r += tempData[idx] * weight;
+                    g += tempData[idx + 1] * weight;
+                    b += tempData[idx + 2] * weight;
+                    weightSum += weight;
+                }
+
+                const idx = (y * width + x) * 4;
+                data[idx] = r / weightSum;
+                data[idx + 1] = g / weightSum;
+                data[idx + 2] = b / weightSum;
+            }
+        }
+
+        // Copiar para segunda pasada
+        tempData.set(data);
+
+        // Aplicar blur vertical
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let r = 0, g = 0, b = 0, weightSum = 0;
+
+                for (let ky = -radius; ky <= radius; ky++) {
+                    const py = Math.min(Math.max(y + ky, 0), height - 1);
+                    const idx = (py * width + x) * 4;
+                    const weight = kernel[ky + radius];
+
+                    r += tempData[idx] * weight;
+                    g += tempData[idx + 1] * weight;
+                    b += tempData[idx + 2] * weight;
+                    weightSum += weight;
+                }
+
+                const idx = (y * width + x) * 4;
+                data[idx] = r / weightSum;
+                data[idx + 1] = g / weightSum;
+                data[idx + 2] = b / weightSum;
+            }
+        }
+    }
+
+    generateGaussianKernel(size) {
+        const kernel = [];
+        const sigma = size / 6;
+        const mean = (size - 1) / 2;
+
+        for (let x = 0; x < size; x++) {
+            kernel.push(Math.exp(-0.5 * Math.pow((x - mean) / sigma, 2)));
+        }
+
+        return kernel;
+    }
+
+    posterizeImage(imageData, palette, ditherAmount) {
+        const { width, height, data } = imageData;
+
+        // Crear array de errores para dithering Floyd-Steinberg
+        const errors = ditherAmount > 0 ?
+            Array.from({ length: height }, () =>
+                Array.from({ length: width }, () => ({ r: 0, g: 0, b: 0 }))
+            ) : null;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = (y * width + x) * 4;
+
+                // Ignorar píxeles transparentes
+                if (data[idx + 3] < 128) continue;
+
+                // Obtener color actual (con error de dithering si aplica)
+                let r = data[idx];
+                let g = data[idx + 1];
+                let b = data[idx + 2];
+
+                if (errors && ditherAmount > 0) {
+                    r = Math.max(0, Math.min(255, r + errors[y][x].r * ditherAmount));
+                    g = Math.max(0, Math.min(255, g + errors[y][x].g * ditherAmount));
+                    b = Math.max(0, Math.min(255, b + errors[y][x].b * ditherAmount));
+                }
+
+                // Encontrar el color más cercano en la paleta
+                let minDist = Infinity;
+                let closestColor = palette[0];
+
+                for (const color of palette) {
+                    const dr = r - color.r;
+                    const dg = g - color.g;
+                    const db = b - color.b;
+                    const dist = dr * dr + dg * dg + db * db;
+
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closestColor = color;
+                    }
+                }
+
+                // Aplicar color de la paleta
+                data[idx] = closestColor.r;
+                data[idx + 1] = closestColor.g;
+                data[idx + 2] = closestColor.b;
+
+                // Calcular y distribuir error si hay dithering
+                if (errors && ditherAmount > 0) {
+                    const errorR = r - closestColor.r;
+                    const errorG = g - closestColor.g;
+                    const errorB = b - closestColor.b;
+
+                    // Floyd-Steinberg dithering distribution
+                    if (x + 1 < width) {
+                        errors[y][x + 1].r += errorR * 7 / 16;
+                        errors[y][x + 1].g += errorG * 7 / 16;
+                        errors[y][x + 1].b += errorB * 7 / 16;
+                    }
+                    if (y + 1 < height) {
+                        if (x > 0) {
+                            errors[y + 1][x - 1].r += errorR * 3 / 16;
+                            errors[y + 1][x - 1].g += errorG * 3 / 16;
+                            errors[y + 1][x - 1].b += errorB * 3 / 16;
+                        }
+                        errors[y + 1][x].r += errorR * 5 / 16;
+                        errors[y + 1][x].g += errorG * 5 / 16;
+                        errors[y + 1][x].b += errorB * 5 / 16;
+                        if (x + 1 < width) {
+                            errors[y + 1][x + 1].r += errorR * 1 / 16;
+                            errors[y + 1][x + 1].g += errorG * 1 / 16;
+                            errors[y + 1][x + 1].b += errorB * 1 / 16;
+                        }
+                    }
+                }
             }
         }
     }

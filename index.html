@@ -61,6 +61,33 @@
                             <!-- Los colores se generarán dinámicamente -->
                         </div>
 
+                        <!-- Herramientas de limpieza -->
+                        <div class="cleanup-tools">
+                            <h3>Limpieza de Ruido</h3>
+                            <p class="tool-description">Elimina el ruido y convierte la imagen a colores sólidos</p>
+
+                            <div class="cleanup-controls">
+                                <div class="control-group">
+                                    <label for="smoothingLevel">Suavizado previo:</label>
+                                    <input type="range" id="smoothingLevel" min="0" max="5" value="1">
+                                    <span id="smoothingValue">1</span>
+                                    <p class="control-hint">Difumina el ruido antes de posterizar</p>
+                                </div>
+
+                                <div class="control-group">
+                                    <label for="ditherAmount">Dithering:</label>
+                                    <input type="range" id="ditherAmount" min="0" max="100" value="0">
+                                    <span id="ditherValue">0%</span>
+                                    <p class="control-hint">Suaviza transiciones entre colores (0 = colores puros)</p>
+                                </div>
+
+                                <div class="cleanup-actions">
+                                    <button id="previewCleanBtn" class="btn btn-secondary">Vista Previa</button>
+                                    <button id="applyCleanBtn" class="btn btn-primary">Aplicar Limpieza</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Editor de color -->
                         <div class="color-editor" id="colorEditor" style="display: none;">
                             <h3>Reemplazar Color</h3>
