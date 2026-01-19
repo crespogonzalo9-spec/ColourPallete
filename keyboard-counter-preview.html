@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contador de Teclas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #e94560, #0f3460);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #8892b0;
+            font-size: 1.1rem;
+        }
+
+        .main-counter {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .counter-circle {
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #1e2746, #252f4a);
+            box-shadow:
+                0 0 60px rgba(233, 69, 96, 0.3),
+                inset 0 0 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #e94560;
+            transition: all 0.3s ease;
+        }
+
+        .counter-circle:hover {
+            transform: scale(1.05);
+            box-shadow:
+                0 0 80px rgba(233, 69, 96, 0.5),
+                inset 0 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .counter-circle.pulse {
+            animation: pulse 0.2s ease-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #total-count {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #e94560;
+            line-height: 1;
+        }
+
+        .counter-label {
+            font-size: 0.9rem;
+            color: #8892b0;
+            margin-top: 10px;
+        }
+
+        .last-key-section {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .last-key-section h2 {
+            font-size: 1.2rem;
+            color: #8892b0;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+
+        .last-key-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #fff;
+            background: linear-gradient(145deg, #2d3a5a, #1e2746);
+            width: 100px;
+            height: 100px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            border: 2px solid #e94560;
+            margin-bottom: 15px;
+            transition: all 0.15s ease;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .last-key-display.pressed {
+            transform: translateY(3px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(145deg, #e94560, #c73e54);
+        }
+
+        .key-code {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+
+        .stats-section {
+            margin-bottom: 40px;
+        }
+
+        .stats-section h2 {
+            font-size: 1.2rem;
+            color: #8892b0;
+            margin-bottom: 20px;
+            font-weight: normal;
+            text-align: center;
+        }
+
+        .stats-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .sort-btn, .reset-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .sort-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #8892b0;
+        }
+
+        .sort-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .sort-btn.active {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .reset-btn {
+            background: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            border: 1px solid #e94560;
+        }
+
+        .reset-btn:hover {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .key-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            min-height: 100px;
+        }
+
+        .key-stat-item {
+            background: linear-gradient(145deg, #2d3a5a, #1e2746);
+            border-radius: 10px;
+            padding: 15px 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .key-stat-item:hover {
+            transform: translateY(-3px);
+            border-color: #e94560;
+        }
+
+        .key-stat-item.highlight {
+            animation: highlight 0.3s ease;
+        }
+
+        @keyframes highlight {
+            0% { background: linear-gradient(145deg, #e94560, #c73e54); }
+            100% { background: linear-gradient(145deg, #2d3a5a, #1e2746); }
+        }
+
+        .key-stat-item .key-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #fff;
+            display: block;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+
+        .key-stat-item .key-count {
+            font-size: 0.9rem;
+            color: #e94560;
+        }
+
+        .empty-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #8892b0;
+            padding: 20px;
+        }
+
+        .session-info {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .session-info p {
+            color: #8892b0;
+            font-size: 0.9rem;
+        }
+
+        .session-info span {
+            color: #e94560;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.8rem;
+            }
+
+            .counter-circle {
+                width: 180px;
+                height: 180px;
+            }
+
+            #total-count {
+                font-size: 3rem;
+            }
+
+            .session-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .key-stats-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Contador de Teclas</h1>
+            <p class="subtitle">Presiona cualquier tecla para empezar a contar</p>
+        </header>
+
+        <div class="main-counter">
+            <div class="counter-circle">
+                <span id="total-count">0</span>
+                <span class="counter-label">Teclas presionadas</span>
+            </div>
+        </div>
+
+        <div class="last-key-section">
+            <h2>Ultima tecla presionada</h2>
+            <div id="last-key" class="last-key-display">-</div>
+            <div id="last-key-code" class="key-code">Codigo: -</div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Estadisticas por tecla</h2>
+            <div class="stats-controls">
+                <button id="sort-alpha" class="sort-btn active">A-Z</button>
+                <button id="sort-count" class="sort-btn">Por cantidad</button>
+                <button id="reset-btn" class="reset-btn">Reiniciar</button>
+            </div>
+            <div id="key-stats" class="key-stats-grid">
+                <p class="empty-message">Aun no hay teclas registradas</p>
+            </div>
+        </div>
+
+        <div class="session-info">
+            <p>Sesion iniciada: <span id="session-start">-</span></p>
+            <p>Teclas por minuto: <span id="keys-per-minute">0</span></p>
+        </div>
+    </div>
+
+    <script>
+        // Keyboard Counter Application
+        class KeyboardCounter {
+            constructor() {
+                this.totalCount = 0;
+                this.keyStats = {};
+                this.sessionStart = null;
+                this.sortMode = 'alpha';
+
+                this.initElements();
+                this.bindEvents();
+                this.startSession();
+            }
+
+            initElements() {
+                this.totalCountEl = document.getElementById('total-count');
+                this.lastKeyEl = document.getElementById('last-key');
+                this.lastKeyCodeEl = document.getElementById('last-key-code');
+                this.keyStatsEl = document.getElementById('key-stats');
+                this.sessionStartEl = document.getElementById('session-start');
+                this.keysPerMinuteEl = document.getElementById('keys-per-minute');
+                this.counterCircle = document.querySelector('.counter-circle');
+                this.sortAlphaBtn = document.getElementById('sort-alpha');
+                this.sortCountBtn = document.getElementById('sort-count');
+                this.resetBtn = document.getElementById('reset-btn');
+            }
+
+            bindEvents() {
+                document.addEventListener('keydown', (e) => this.handleKeyPress(e));
+                this.sortAlphaBtn.addEventListener('click', () => this.setSortMode('alpha'));
+                this.sortCountBtn.addEventListener('click', () => this.setSortMode('count'));
+                this.resetBtn.addEventListener('click', () => this.resetStats());
+                setInterval(() => this.updateKeysPerMinute(), 1000);
+            }
+
+            startSession() {
+                this.sessionStart = new Date();
+                this.sessionStartEl.textContent = this.formatTime(this.sessionStart);
+            }
+
+            formatTime(date) {
+                return date.toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+            }
+
+            handleKeyPress(e) {
+                if (['F5', 'F12'].indexOf(e.key) === -1) {
+                    e.preventDefault();
+                }
+
+                const keyName = this.getKeyName(e);
+                const keyCode = e.code;
+
+                this.totalCount++;
+                this.totalCountEl.textContent = this.totalCount;
+
+                this.lastKeyEl.textContent = this.getDisplayName(e);
+                this.lastKeyCodeEl.textContent = `Codigo: ${keyCode}`;
+
+                this.counterCircle.classList.remove('pulse');
+                void this.counterCircle.offsetWidth;
+                this.counterCircle.classList.add('pulse');
+
+                this.lastKeyEl.classList.add('pressed');
+                setTimeout(() => this.lastKeyEl.classList.remove('pressed'), 150);
+
+                if (!this.keyStats[keyName]) {
+                    this.keyStats[keyName] = {
+                        count: 0,
+                        displayName: this.getDisplayName(e),
+                        code: keyCode
+                    };
+                }
+                this.keyStats[keyName].count++;
+
+                this.renderKeyStats(keyName);
+            }
+
+            getKeyName(e) {
+                if (e.key.length === 1) {
+                    return e.key.toUpperCase();
+                }
+                return e.code;
+            }
+
+            getDisplayName(e) {
+                const specialKeys = {
+                    'Space': 'Space',
+                    'Enter': 'Enter',
+                    'Backspace': 'Back',
+                    'Tab': 'Tab',
+                    'Escape': 'Esc',
+                    'ArrowUp': 'Up',
+                    'ArrowDown': 'Down',
+                    'ArrowLeft': 'Left',
+                    'ArrowRight': 'Right',
+                    'ShiftLeft': 'L Shift',
+                    'ShiftRight': 'R Shift',
+                    'ControlLeft': 'L Ctrl',
+                    'ControlRight': 'R Ctrl',
+                    'AltLeft': 'L Alt',
+                    'AltRight': 'R Alt',
+                    'MetaLeft': 'L Meta',
+                    'MetaRight': 'R Meta',
+                    'CapsLock': 'Caps',
+                    'Delete': 'Del',
+                    'Insert': 'Ins',
+                    'Home': 'Home',
+                    'End': 'End',
+                    'PageUp': 'PgUp',
+                    'PageDown': 'PgDn'
+                };
+
+                if (e.key.length === 1) {
+                    return e.key.toUpperCase();
+                }
+
+                return specialKeys[e.code] || e.key;
+            }
+
+            renderKeyStats(highlightKey = null) {
+                const keys = Object.keys(this.keyStats);
+
+                if (keys.length === 0) {
+                    this.keyStatsEl.innerHTML = '<p class="empty-message">Aun no hay teclas registradas</p>';
+                    return;
+                }
+
+                if (this.sortMode === 'alpha') {
+                    keys.sort((a, b) => a.localeCompare(b));
+                } else {
+                    keys.sort((a, b) => this.keyStats[b].count - this.keyStats[a].count);
+                }
+
+                this.keyStatsEl.innerHTML = keys.map(key => {
+                    const stat = this.keyStats[key];
+                    const isHighlight = key === highlightKey ? 'highlight' : '';
+                    return `
+                        <div class="key-stat-item ${isHighlight}" data-key="${key}">
+                            <span class="key-name">${stat.displayName}</span>
+                            <span class="key-count">${stat.count}</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            setSortMode(mode) {
+                this.sortMode = mode;
+                this.sortAlphaBtn.classList.toggle('active', mode === 'alpha');
+                this.sortCountBtn.classList.toggle('active', mode === 'count');
+                this.renderKeyStats();
+            }
+
+            updateKeysPerMinute() {
+                if (!this.sessionStart || this.totalCount === 0) {
+                    this.keysPerMinuteEl.textContent = '0';
+                    return;
+                }
+
+                const minutesElapsed = (Date.now() - this.sessionStart.getTime()) / 60000;
+                if (minutesElapsed < 0.1) {
+                    this.keysPerMinuteEl.textContent = '0';
+                    return;
+                }
+
+                const kpm = Math.round(this.totalCount / minutesElapsed);
+                this.keysPerMinuteEl.textContent = kpm;
+            }
+
+            resetStats() {
+                this.totalCount = 0;
+                this.keyStats = {};
+                this.totalCountEl.textContent = '0';
+                this.lastKeyEl.textContent = '-';
+                this.lastKeyCodeEl.textContent = 'Codigo: -';
+                this.keysPerMinuteEl.textContent = '0';
+                this.keyStatsEl.innerHTML = '<p class="empty-message">Aun no hay teclas registradas</p>';
+                this.startSession();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new KeyboardCounter();
+        });
+    </script>
+</body>
+</html>
